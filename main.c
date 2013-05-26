@@ -84,9 +84,9 @@ int main(int argc, char** argv) {
         
     } while(c != 'q');
 
-
-    pthread_join(thread_listener, NULL);
-    pthread_join(thread_initiator, NULL);
+    pthread_cancel(thread_initiator);
+    sleep(10);
+    pthread_cancel(thread_listener);
 
     return (EXIT_SUCCESS);
 }

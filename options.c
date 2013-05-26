@@ -46,6 +46,7 @@ int setopt(int argc, char** argv, struct options * opt) {
     short ver = 4;
     
     opt->sin_src_mask.sin_addr.s_addr = htonl(0xff000000);
+    opt->wait = 10;
 
     while ((c = getopt(argc, argv, "v:s:d:m:")) != -1)
         switch (c) {
@@ -60,6 +61,9 @@ int setopt(int argc, char** argv, struct options * opt) {
                 break;
             case 'v' :
                 ver = atoi(optarg);
+                break;
+            case 'w' :
+                opt->wait = atoi(optarg);
                 break;
         }
 }

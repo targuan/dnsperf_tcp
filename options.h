@@ -18,6 +18,8 @@ struct options {
     struct sockaddr_in sin_src;
     struct sockaddr_in sin_src_mask;
     struct sockaddr_in sin_dst;
+    
+    int wait; // wait _wait_ seconds before cancelling listener
 };
 
 struct parameters {
