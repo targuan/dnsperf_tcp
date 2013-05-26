@@ -55,6 +55,7 @@ int main(int argc, char** argv) {
     }
     
     params.sin_dst = opt.sin_dst;
+    params.sin_src_mask = opt.sin_src_mask;
     params.sin_src = opt.sin_src;
     params.socket = s;
     

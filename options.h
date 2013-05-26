@@ -16,13 +16,14 @@ extern "C" {
 
 struct options {
     struct sockaddr_in sin_src;
+    struct sockaddr_in sin_src_mask;
     struct sockaddr_in sin_dst;
 };
 
 struct parameters {
     struct sockaddr_in sin_src;
+    struct sockaddr_in sin_src_mask;
     struct sockaddr_in sin_dst;
-    struct sockaddr_in sin_dst_mask;
     
     int socket;
 };

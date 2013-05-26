@@ -44,11 +44,16 @@ int setaddr(char * name, struct sockaddr_in * sin) {
 int setopt(int argc, char** argv, struct options * opt) {
     int c;
     short ver = 4;
+    
+    opt->sin_src_mask.sin_addr.s_addr = htonl(0xff000000);
 
-    while ((c = getopt(argc, argv, "v:s:d:")) != -1)
+    while ((c = getopt(argc, argv, "v:s:d:m:")) != -1)
         switch (c) {
             case 's' :
                 setaddr(optarg,&(opt->sin_src));
+                break;
+            case 'm' :
+                setaddr(optarg,&(opt->sin_src_mask));
                 break;
             case 'd' :
                 setaddr(optarg,&(opt->sin_dst));
