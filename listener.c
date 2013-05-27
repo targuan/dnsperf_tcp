@@ -13,6 +13,28 @@
 #include "listener.h"
 #include "options.h"
 
+
+FILE* fp_domain;
+void init_domain_file(struct options *params) {
+    fp_domain = fopen(params->file,"r");
+    
+    if(fp_domain == NULL) {
+        perror("fopen() domain file");
+        exit(1);
+    } else {
+        printf("fopen() OK\n");
+    }
+}
+void nextdomain(char **domain) {
+    char line[1024];
+    
+    if(feof(fp_domain)) {
+        rewind(fp_domain);
+    }
+    fgets(line,1024,fp_domain);
+    *domain=strtok(line,"\n\r \t");
+}
+
 void fill_ipv4(struct iphdr *ip, u_int32_t daddr, u_int32_t saddr,u_int8_t protocol) {
     ip->ihl = 5;
     ip->version = 4;
@@ -75,6 +97,7 @@ void send_psh(int socket, struct iphdr *ip_syn,struct tcphdr *tcp_syn){
     int sendsize;
     short *len;
     struct sockaddr_in daddr = {0};
+    char *domain;
     
     if(buffer_psh == NULL){
         buffer_psh = calloc(sizeof(u_char)*(PACKETSZ) + sizeof(struct iphdr) + sizeof(struct tcphdr),1);
@@ -97,13 +120,14 @@ void send_psh(int socket, struct iphdr *ip_syn,struct tcphdr *tcp_syn){
     tcp->ack = 1;
     tcp->psh = 1;
     
+    nextdomain(&domain);
     
     dns = buffer + (ip->ihl * 4) + sizeof(struct tcphdr) + 2;
-    sendsize = res_mkquery(QUERY, "isc.org", C_IN, T_A, NULL,
+    sendsize = res_mkquery(QUERY, domain, C_IN, T_A, NULL,
             0, NULL, dns, PACKETSZ);
     
     
-    len = buffer + (ip->ihl * 4) + sizeof(struct tcphdr);
+    len = (short *)(buffer + (ip->ihl * 4) + sizeof(struct tcphdr));
     *len = htons(sendsize);
     ip->tot_len = sendsize + 2 + sizeof(struct tcphdr) + (ip->ihl * 4);
     
@@ -163,13 +187,13 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
     struct ether_header *ether;
     struct iphdr *ip;
     struct tcphdr *tcp;
-    struct parameters * params = args;
+    struct options * params = (struct options *)args;
     
     ether = (struct ether_header *)(packet+offset);
     
     //eth hdr truncated
     if((offset+ETHER_HDR_LEN) >= header->caplen) {
-        printf("caplen too short for eth hdr");
+        printf("caplen too short for eth hdr\n");
         return;
     }
     if(ntohs(ether->ether_type) != ETHERTYPE_IP) {
@@ -182,16 +206,16 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
     
     //ip hdr truncated
     if((offset + sizeof(struct iphdr)) >= header->caplen) {
-        printf("caplen too short for ip hdr");
+        printf("caplen too short for ip hdr\n");
         return;
     }
     //ip hdr truncated
     if((offset + ip->ihl*4) >= header->caplen) {
-        printf("caplen too short for ip hdr with options");
+        printf("caplen too short for ip hdr with options\n");
         return;
     }
     if(ip->protocol != IPPROTO_TCP) {
-        printf("not a tcp fragment");
+        printf("not a tcp fragment\n");
         return;
     }
     
@@ -199,11 +223,11 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
     offset += ip->ihl*4;
     tcp = (struct tcphdr *)(packet + offset);
     if((offset + sizeof(struct tcphdr)) >= header->caplen) {
-        printf("caplen too short for tcp hdr");
+        printf("caplen too short for tcp hdr\n");
         return;
     }
     if((offset + tcp->doff*4) >= header->caplen) {
-        printf("caplen too short for tcp hdr with options");
+        printf("caplen too short for tcp hdr with options\n");
         return;
     }
     
@@ -228,12 +252,15 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
 void * listner(void * p_data) {
     printf("listener created");
 
+    struct options *params = p_data;
     pcap_t *handle;
     char errbuf[PCAP_ERRBUF_SIZE];
     struct bpf_program fp;
-    char filter_exp[] = "net 1.0.0.0/8 and src port 53";
+    char filter_exp[] = "dst net 1.0.0.0/8 and src port 53";
+    
+    init_domain_file(params);
 
-    handle = pcap_open_live("eth2", BUFSIZ, 1, 80, errbuf);
+    handle = pcap_open_live("bond1", BUFSIZ, 1, 200, errbuf);
     if (handle == NULL) {
         fprintf(stderr, "Couldn't open device %s: %s\n", "eth2", errbuf);
         return;

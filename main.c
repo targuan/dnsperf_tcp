@@ -34,12 +34,14 @@ int main(int argc, char** argv) {
     int optval, optlen;
     struct options opt;
 
-    struct parameters params;
     pthread_t thread_listener, thread_initiator;
     
     setopt(argc,argv,&opt);
 
-    
+    if(opt.file == NULL) {
+        printf("No file set\n");
+        exit(EXIT_FAILURE);
+    }
 
 
     s = socket(AF_INET, SOCK_RAW, IPPROTO_UDP);
@@ -47,6 +49,8 @@ int main(int argc, char** argv) {
         perror("socket() error");
         exit(EXIT_FAILURE);
     }
+    
+    opt.socket = s;
 
     optval = 1;
     optlen = sizeof (optval);
@@ -55,19 +59,14 @@ int main(int argc, char** argv) {
         exit(EXIT_FAILURE);
     }
     
-    params.sin_dst = opt.sin_dst;
-    params.sin_src_mask = opt.sin_src_mask;
-    params.sin_src = opt.sin_src;
-    params.socket = s;
-    
-    if(pthread_create(&thread_listener, NULL, listner, &params) != 0) {
+    if(pthread_create(&thread_listener, NULL, listner, &opt) != 0) {
         perror("pthread_create() error");
         exit(EXIT_FAILURE);
     }
     
     sleep(1);
     
-    if(pthread_create(&thread_initiator, NULL, initiator, &params) != 0) {
+    if(pthread_create(&thread_initiator, NULL, initiator, &opt) != 0) {
         perror("pthread_create() error");
         exit(EXIT_FAILURE);
     }
@@ -86,7 +85,7 @@ int main(int argc, char** argv) {
     } while(c != 'q');
 
     pthread_cancel(thread_initiator);
-    sleep(10);
+    sleep(opt.wait);
     pthread_cancel(thread_listener);
 
     return (EXIT_SUCCESS);

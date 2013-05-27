@@ -47,8 +47,10 @@ int setopt(int argc, char** argv, struct options * opt) {
     
     opt->sin_src_mask.sin_addr.s_addr = htonl(0xff000000);
     opt->wait = 10;
+    opt->file = NULL;
+    opt->pps = 1;
 
-    while ((c = getopt(argc, argv, "v:s:d:m:")) != -1)
+    while ((c = getopt(argc, argv, "v:s:d:m:w:f:p:")) != -1)
         switch (c) {
             case 's' :
                 setaddr(optarg,&(opt->sin_src));
@@ -65,6 +67,12 @@ int setopt(int argc, char** argv, struct options * opt) {
             case 'w' :
                 opt->wait = atoi(optarg);
                 break;
+            case 'f':
+                opt->file = malloc(sizeof(char)*strlen(optarg)+1);
+                memcpy(opt->file,optarg,strlen(optarg)+1);
+                break;
+            case 'p':
+                opt->pps = atoi(optarg);
         }
 }
 
@@ -93,6 +101,10 @@ void fin_sent(){
 void fin_received(){
     fin_r++;
 }
+
+int syn_lost() {
+    return syn_s-syn_r;
+}
 void print_stat(){
     int _syn_s = syn_s;
     int _syn_r = syn_r;
@@ -103,6 +115,7 @@ void print_stat(){
     
     printf("lost syn %d\n",_syn_s-_syn_r);
     printf("lost psh %d\n",_psh_s-_psh_r);
+    printf("syn sent %d\n",_syn_s);
     printf("packet sent %d\n",_psh_s);
     printf("packet received %d\n",_psh_r);
 }

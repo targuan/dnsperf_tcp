@@ -8,7 +8,7 @@
 #include "options.h"
 
 void * initiator(void * p_data) {
-    struct parameters * params = (struct parameters *) p_data;
+    struct options * params = (struct options *) p_data;
     u_char *buffer;
 
     struct iphdr *ip;
@@ -16,6 +16,9 @@ void * initiator(void * p_data) {
     
     uint16_t port = 11111;
     uint32_t ips = ntohl(params->sin_src.sin_addr.s_addr);
+    
+    int usleep_v;
+    int dosleep = 0;
 
     buffer = calloc(sizeof (struct iphdr) + sizeof (struct tcphdr), 1);
 
@@ -41,7 +44,12 @@ void * initiator(void * p_data) {
     ip->tot_len = sizeof (struct tcphdr) + (ip->ihl * 4);
 
     srand( time( NULL ) );
+    
+    usleep_v = 1000000.0/params->pps;
+    printf("usleep %d",usleep_v);
+    
     while (1) {
+        dosleep = !dosleep;
         if(!pause_(0)){
             tcp->seq = rand();
             tcp->source = rand();
@@ -54,6 +62,10 @@ void * initiator(void * p_data) {
             }
             syn_sent();
         }
-        sleep(1);
+        if(dosleep) {
+            usleep(usleep_v);
+        }
+        
+        
     }
 }

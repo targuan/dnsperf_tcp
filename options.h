@@ -18,19 +18,14 @@ struct options {
     struct sockaddr_in sin_src;
     struct sockaddr_in sin_src_mask;
     struct sockaddr_in sin_dst;
-    
-    int wait; // wait _wait_ seconds before cancelling listener
-};
-
-struct parameters {
-    struct sockaddr_in sin_src;
-    struct sockaddr_in sin_src_mask;
-    struct sockaddr_in sin_dst;
-    
+    char *file;
     int socket;
+    int wait; // wait _wait_ seconds before cancelling listener
+    int pps;
 };
-int setopt(int argc, char** argv, struct options * opt);
 
+int setopt(int argc, char** argv, struct options * opt);
+int syn_lost();
 void syn_sent();
 void syn_received();
 void psh_sent();
